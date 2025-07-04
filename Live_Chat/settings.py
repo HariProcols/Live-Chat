@@ -38,7 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'Chat'
+    'channels',
+    'Chat',
+    
 ]
 
 MIDDLEWARE = [
@@ -56,18 +58,29 @@ ROOT_URLCONF = 'Live_Chat.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # optional global templates folder
+        'DIRS': [],  # or [BASE_DIR / 'templates']
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-                ...
+                # You need to make sure these are present:
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',  # ✅ Fix for warning
+                'django.contrib.auth.context_processors.auth',  # ✅ Fix for ERROR
+                'django.contrib.messages.context_processors.messages',  # ✅ Fix for ERROR
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'Live_Chat.wsgi.application'
+ASGI_APPLICATION = 'yourproject.asgi.application'
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",  # For dev
+        # For production on Render, use Redis instead
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases

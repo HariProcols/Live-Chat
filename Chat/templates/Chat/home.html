@@ -1,0 +1,64 @@
+<!-- chat/templates/chat/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Chat</title>
+    <style>
+        #chat-container {
+            width: 80%;
+            max-width: 600px;
+            margin: auto;
+            border: 1px solid #ccc;
+            height: 400px;
+            overflow-y: scroll;
+            padding: 10px;
+        }
+        #message-input {
+            width: 80%;
+        }
+        #send-btn {
+            width: 18%;
+        }
+    </style>
+</head>
+<body>
+    <h2 style="text-align:center;">Live Chat</h2>
+    <div id="chat-container"></div>
+    <input id="message-input" type="text" placeholder="Type your message...">
+    <button id="send-btn">Send</button>
+
+    <script>
+        const username = prompt("Enter your display name:");
+        const chatSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/chat/'
+        );
+
+        const container = document.getElementById('chat-container');
+        const input = document.getElementById('message-input');
+        const button = document.getElementById('send-btn');
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const message = `${data.username}: ${data.message}`;
+            const msgElem = document.createElement('div');
+            msgElem.textContent = message;
+            container.appendChild(msgElem);
+            container.scrollTop = container.scrollHeight;
+        };
+
+        button.onclick = () => {
+            if (input.value.trim() !== "") {
+                chatSocket.send(JSON.stringify({
+                    'username': username,
+                    'message': input.value
+                }));
+                input.value = '';
+            }
+        };
+
+        input.addEventListener("keyup", function(e) {
+            if (e.key === 'Enter') button.click();
+        });
+    </script>
+</body>
+</html>
