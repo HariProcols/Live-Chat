@@ -7,7 +7,10 @@ class Message(models.Model):
     content = models.TextField(blank=True)
     file = models.FileField(upload_to='chat_uploads/', blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
-
-    def is_image(self):
+    
+    @property
+    def is_image_file(self):
+        if not self.file:
+            return False
         ext = os.path.splitext(self.file.name)[1].lower()
         return ext in ['.jpg', '.jpeg', '.png', '.gif']

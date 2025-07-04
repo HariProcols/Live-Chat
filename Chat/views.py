@@ -11,11 +11,11 @@ from django.views.decorators.http import require_POST
 from django.middleware.csrf import get_token
 
 def index(request):
-    # This ensures the CSRF token is available in the template
+    messages = Message.objects.order_by('timestamp')  # oldest first
     return render(request, 'Chat/home.html', {
-        'csrf_token': get_token(request)
+        'csrf_token': get_token(request),
+        'messages': messages
     })
-
 @require_POST
 def upload(request):
     file = request.FILES.get('file')
@@ -23,11 +23,11 @@ def upload(request):
 
     if file and username:
         user, _ = User.objects.get_or_create(username=username)
-        
+
         # Save the uploaded message with file
         message = Message.objects.create(user=user, file=file)
         file_url = message.file.url
-        is_image = message.is_image()
+        is_image = message.is_image_file  # ✅ FIXED: use property, not method
 
         # Send file data to WebSocket group
         channel_layer = get_channel_layer()
