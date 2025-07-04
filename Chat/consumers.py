@@ -1,69 +1,77 @@
-import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from asgiref.sync import sync_to_async
+from django.contrib.auth.models import User
 from .models import Message
-
+from channels.db import database_sync_to_async
+import json
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.room_group_name = "chat_room"
-
-        # Join room group
+        self.room_group_name = "chat_room"  # match group in views.py upload()
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
         await self.accept()
 
-        # Send previous messages to the newly connected user
-        messages = await self.get_last_messages()
-        for msg in messages:
-            await self.send(text_data=json.dumps({
-                'username': msg.username,
-                'message': msg.message
-            }))
-
     async def disconnect(self, close_code):
-        # Leave room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
 
-    # Receive message from WebSocket
     async def receive(self, text_data):
         data = json.loads(text_data)
-        username = data['username']
-        message = data['message']
+        username = data.get('username')
+        message = data.get('message', '')
+        typing = data.get('typing', None)
 
-        # Save the message to the database
-        await self.save_message(username, message)
+        if not username:
+            return  # skip if username is missing
 
-        # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                'username': username,
-                'message': message
-            }
-        )
+        # Handle typing indicator
+        if typing is not None:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'typing_status',
+                    'username': username,
+                    'typing': typing,
+                }
+            )
+            return
 
-    # Receive message from room group
+        # Handle message
+        if message:
+            user = await self.get_or_create_user(username)
+            msg = await self.create_message(user, message)
+
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat_message',
+                    'username': user.username,
+                    'message': msg.content,
+                }
+            )
+
     async def chat_message(self, event):
-        username = event['username']
-        message = event['message']
-
-        # Send message to WebSocket
         await self.send(text_data=json.dumps({
-            'username': username,
-            'message': message
+            'username': event['username'],
+            'message': event.get('message', ''),
+            'file_url': event.get('file_url'),
+            'is_image': event.get('is_image', False),
         }))
 
-    @sync_to_async
-    def get_last_messages(self):
-        return Message.objects.order_by('-timestamp')[:20][::-1]  # Last 20 messages, oldest first
+    async def typing_status(self, event):
+        await self.send(text_data=json.dumps({
+            'username': event['username'],
+            'typing': event['typing'],
+        }))
 
-    @sync_to_async
-    def save_message(self, username, message):
-        Message.objects.create(username=username, message=message)
+    @database_sync_to_async
+    def get_or_create_user(self, username):
+        return User.objects.get_or_create(username=username)[0]
+
+    @database_sync_to_async
+    def create_message(self, user, content):
+        return Message.objects.create(user=user, content=content)
