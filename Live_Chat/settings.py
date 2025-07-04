@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+from redis.asyncio.connection import SSLConnection
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -81,10 +82,16 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": ["rediss://default:YOUR_PASSWORD@YOUR_REDIS_URL.upstash.io:6379"],
+            "hosts": [{
+                "host": "driven-spider-41228.upstash.io",
+                "port": 6379,
+                "password": "AaEMAAIjcDEwM2IzYjA4NjRiM2U0ZGE2YTIzMThjM2MyMWY5Y2I2OHAxMA",
+                "connection_class": SSLConnection,
+            }],
         },
     },
 }
+
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
