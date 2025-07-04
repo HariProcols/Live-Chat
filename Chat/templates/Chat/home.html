@@ -156,7 +156,8 @@
 <!-- Chat Script -->
 <script>
 let username = '';
-const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+const chatSocket = new WebSocket(`${wsScheme}://${window.location.host}/ws/chat/`);
 const container = document.getElementById('chat-container');
 const input = document.getElementById('message-input');
 const button = document.getElementById('send-btn');
