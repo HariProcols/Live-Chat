@@ -4,7 +4,7 @@ import os
 
 class Message(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField(blank=True)
+    content = models.TextField(blank=True, default='')
     file = models.FileField(upload_to='chat_uploads/', blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     
