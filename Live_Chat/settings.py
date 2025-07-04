@@ -76,13 +76,15 @@ TEMPLATES = [
 WSGI_APPLICATION = 'Live_Chat.wsgi.application'
 ASGI_APPLICATION = 'Live_Chat.asgi.application'
 
+
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",  # For dev
-        # For production on Render, use Redis instead
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": ["rediss://default:YOUR_PASSWORD@YOUR_REDIS_URL.upstash.io:6379"],
+        },
     },
 }
-
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
