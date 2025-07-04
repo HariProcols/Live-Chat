@@ -27,18 +27,22 @@ def upload(request):
         # Save the uploaded message with file
         message = Message.objects.create(user=user, file=file)
         file_url = message.file.url
-        is_image = message.is_image_file  # ✅ FIXED: use property, not method
 
-        # Send file data to WebSocket group
+        # Detect type
+        is_image = message.is_image_file
+        is_audio = message.is_audio_file
+
+        # Send to WebSocket group
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
-            'chat_room',  # should match ChatConsumer room_group_name
+            'chat_room',
             {
                 'type': 'chat_message',
                 'username': username,
                 'message': '',
                 'file_url': file_url,
                 'is_image': is_image,
+                'is_audio': is_audio,
             }
         )
 

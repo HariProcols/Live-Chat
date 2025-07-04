@@ -60,6 +60,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'message': event.get('message', ''),
             'file_url': event.get('file_url'),
             'is_image': event.get('is_image', False),
+            'is_audio': event.get('is_audio', False),
         }))
 
     async def typing_status(self, event):
